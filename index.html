@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truth or Dare</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ff6347;
+        }
+
+        #inputArea,
+        #gameArea,
+        #leaderboard {
+            display: none;
+            margin: 20px auto;
+            padding: 20px;
+            border: 2px solid #ff6347;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #ff6347;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #ff4500;
+        }
+
+        #question {
+            font-size: 20px;
+            margin: 15px 0;
+            padding: 10px;
+            border: 2px dashed #ff6347;
+            border-radius: 5px;
+        }
+
+        .response-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        #timer {
+            font-size: 24px;
+            color: #00796b;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        #pointsDisplay {
+            font-size: 24px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00796b;
+        }
+
+        .player-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .remove-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .score-button {
+            font-size: 24px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Truth or Dare</h1>
+    <div id="pointsDisplay">Points:</div>
+    <div id="timer">05:00</div>
+
+    <div id="inputArea">
+        <h2>Enter Player Names</h2>
+        <input type="text" id="playerInput" placeholder="Enter player name" />
+        <button onclick="addPlayer()">Add Player</button>
+        <button onclick="startGame()">Start Game</button>
+        <ul class="player-list" id="playerList"></ul>
+    </div>
+
+    <div id="gameArea">
+        <h2 id="currentPlayer"></h2>
+        <div id="question">Choose Truth or Dare!</div>
+        <div class="response-buttons" id="responseButtons">
+            <button id="acceptTruthBtn">Truth</button>
+            <button id="acceptDareBtn">Dare</button>
+        </div>
+        <div id="scoreButtons" class="response-buttons" style="display:none;">
+            <button class="score-button" id="checkMarkBtn">✅</button>
+            <button class="score-button" id="crossMarkBtn">❌</button>
+        </div>
+    </div>
+
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <ul id="leaderboardList"></ul>
+    </div>
+
+    <script>
+        const truthQuestions = [
+            "What's your biggest pet peeve?",
+            "Have you ever had a crush on a teacher?",
+            "Have you ever cheated on a partner?",
+            "What's the most embarrassing thing you've done while drunk?",
+            "Have you ever stolen something?",
+            "Have you ever lied on your resume?",
+            "What's the weirdest dream you've ever had?",
+            "Have you ever been in a physical fight?",
+            "What's your guilty pleasure?",
+            "Have you ever snooped through someone else's phone or computer?",
+            "What's the most trouble you've ever been in with the law?",
+            "Have you ever faked being sick to get out of something?",
+            "Have you ever cheated on a test or exam?",
+            "What's the most embarrassing text message you've sent to the wrong person?",
+            "Have you ever had a one-night stand?",
+            "What's the most embarrassing thing your parents have caught you doing?",
+            "Have you ever sent a naughty picture to someone?",
+            "Have you ever had a secret crush on someone in this room?",
+            "What's the worst date you've ever been on?",
+            "Have you ever lied to your best friend?",
+            "What's the most childish thing you still do?",
+            "Have you ever had a near-death experience?",
+            "Have you ever shoplifted?",
+            "What's your weirdest habit?",
+            "Have you ever had a crush on a coworker?",
+            "What's your most irrational fear?",
+            "Have you ever been caught picking your nose?",
+            "What's the most embarrassing thing you've Googled?",
+            "Have you ever lied about your age?",
+            "Have you ever eavesdropped on a conversation you weren't supposed to hear?",
+            "What's the strangest food you've ever eaten?",
+            "Have you ever had a crush on someone much older or younger than you?",
+            "Have you ever broken something and blamed it on someone else?",
+            "What's the most embarrassing thing you've posted on social media?",
+            "Have you ever had a crush on a fictional character?",
+            "Have you ever been in love with someone who didn't love you back?",
+            "What's the most embarrassing nickname you've ever had?",
+            "Have you ever lied about your income?",
+            "What's the grossest thing you've ever eaten?",
+            "Have you ever been caught talking to yourself?",
+            "Have you ever been fired from a job?",
+            "What's the worst lie you've ever told and got away with?",
+            "Have you ever had a paranormal experience?",
+            "What's the most embarrassing thing you've done in front of a crush?",
+            "Have you ever pretended to know something you had no clue about?",
+            "What's the most embarrassing thing you've worn in public?",
+            "Have you ever cheated in a game or contest?",
+            "What's the most embarrassing song on your playlist?",
+            "Have you ever had a crush on a friend's sibling?",
+            "Have you ever had a crush on someone of the same gender?",
+            // Add more truths if needed...
+            "What's the most ridiculous thing you believed as a child?",
+            "What's a secret you’ve never told anyone?",
+            "What's the most embarrassing moment in school?",
+            "If you could change one thing about your life, what would it be?",
+            "What was your first impression of your best friend?",
+            "Have you ever been ghosted?",
+            "If you could date any celebrity, who would it be?",
+            "What's your biggest insecurity?",
+            "What’s a bad habit you want to break?",
+            "Have you ever been in love?",
+            "What's your biggest fear?",
+            "If you had to live in another country, which one would you choose?",
+            "What’s something you’ve never done but want to try?",
+            "What’s your favorite childhood memory?",
+            "What's your biggest regret?",
+            "What are you most proud of?",
+            "What has been your best purchase ever?",
+            "What's one thing you'd change about yourself?",
+            "What’s the best gift you’ve ever received?",
+            "What do you wish you knew more about?",
+            "Have you ever had a crush on a friend?",
+            "What is your happiest memory?",
+            "What’s something you wish you could do over?",
+            "Have you ever had an imaginary friend?",
+            "What’s the worst trouble you’ve ever been in?",
+            "What was the worst haircut you ever had?",
+            "What’s your dream job?",
+            "What’s something you have done that you are proud of?",
+            "What’s your worst habit?",
+            "Do you believe in love at first sight?",
+            "What would you do with a million dollars?",
+            "What’s your guilty pleasure TV show?",
+            "What’s your favorite place in your city?",
+            "What’s your go-to karaoke song?",
+            "If you could have dinner with anyone, dead or alive, who would it be?",
+            "What’s your favorite holiday tradition?",
+            "What do you value most in a friendship?",
+            "Do you believe in fate?",
+            "What are you most thankful for?",
+            "What’s your biggest dream?",
+            "Have you ever been in a situation where you had to lie?",
+            "What’s your most controversial opinion?",
+            "What’s one thing you can’t live without?",
+            "What’s your favorite way to spend a day off?",
+            "If you could have any animal as a pet, what would it be?",
+            "What’s your least favorite food?",
+            "What kid's movie do you still enjoy?",
+            "What’s your biggest turn-off?",
+            "What’s something that recently made you laugh?",
+            "If you could erase one past experience, what would it be?",
+            "What’s something you still want to learn?",
+            "What’s your biggest achievement in life so far?",
+            "Have you ever had a crush on someone you shouldn't have?",
+            "What’s your biggest pet peeve?",
+            "What habit are you proudest of breaking?",
+            "What makes you feel most alive?",
+            "What’s the most embarrassing thing you did while trying to be cool?",
+            "What’s one embarrassing thing your parents caught you doing?",
+            "How would you describe your sense of style?",
+            "What’s the worst gift you’ve ever received?",
+            "What’s something people would be surprised to learn about you?",
+            "What’s your biggest accomplishment in the last year?",
+            "What’s the best piece of advice you’ve ever received?",
+            "What’s the worst date you’ve ever been on?",
+            "Have you ever had a run-in with the law?",
+            "What’s your favorite song lyrics that you relate to?",
+            "What’s something you are currently struggling with?",
+            "Do you have a secret skill or talent?",
+            "What’s your least favorite household chore?",
+            "What’s your biggest goal for the next year?",
+            "Have you ever cried during a movie?",
+            "What’s your dream vacation destination?",
+            "What’s a book that changed your perspective?",
+            "What’s your favorite family tradition?",
+            "Have you ever kept a journal?",
+            "What’s something that makes you really angry?",
+            "Have you ever been in a situation where you had to stand up for someone?",
+            "What’s one positive thing you tell yourself?",
+            "If you could relive any moment in your life, what would it be?",
+            "What’s the best compliment you’ve ever received?",
+            "What’s one thing you would change about your school?",
+            "What’s your biggest struggle with social media?",
+            "If you could go back in time, what would you change?",
+            "What’s something that motivates you to get out of bed?",
+            "What’s one thing you wish people understood about you?",
+            "What’s a skill you want to learn this year?",
+            "What motivates you to work hard?",
+            "What’s a trend you don't understand?",
+            "What do you think is your most attractive trait?",
+            "What is the most ridiculous outfit you've ever worn?"
+        ];
+
+        const dareChallenges = [
+            "Sing a song in front of everyone.",
+            "Do the Chicken Dance.",
+            "Call a random contact from your phone and say you love them.",
+            "Wear your clothes backward for the next 5 minutes.",
+            "Dance for 1 minute without music.",
+            "Attempt to juggle for 1 minute.",
+            "Talk in an accent for the next 3 rounds.",
+            "Post an embarrassing photo on social media.",
+            "Let someone write on your forehead with a pen.",
+            "Do a cartwheel.",
+            "Talk to someone in the room like you're a celebrity.",
+            "Do your best impression of a famous person.",
+            "Imitate a baby crying.",
+            "Let someone else give you a hairstyle of their choice.",
+            "Do 10 pushups.",
+            "Let someone tickle you for 30 seconds.",
+            "Act like a monkey until your next turn.",
+            "Do a silly dance for a minute.",
+            "Let everyone make a funny face for 10 seconds.",
+            "Walk across the room blindfolded.",
+            "Pretend to be a waiter/waitress and take an order.",
+            "Speak only in questions until your next turn.",
+            "Do your best chicken impression.",
+            "Let someone else pick a tattoo (temporary) for you.",
+            "Sing the chorus of your favorite song.",
+            "Do a handstand.",
+            "Talk like a pirate for the next 3 rounds.",
+            "Try to lick your elbow.",
+            "Do the Macarena dance.",
+            "Sing the first song that comes to your head nonstop for 30 seconds.",
+            "Pretend to be a news anchor and report the weather.",
+            "Let someone draw on your arm.",
+            "Do an impression of your favorite animal.",
+            "Try to touch your toes for a minute.",
+            "Imitate your favorite cartoon character.",
+            // Add more dares if needed...
+        ];
+
+        const players = [];
+        const points = {};
+        let currentTurn = 0;
+        let isTaskActive = false;
+        let timerInterval;
+        let timeLeft = 300; // 300 seconds for 5 minutes
+
+        window.onload = function () {
+            document.getElementById('inputArea').style.display = 'block';
+        };
+
+        function addPlayer() {
+            const playerInput = document.getElementById('playerInput');
+            const playerName = playerInput.value.trim();
+            if (playerName && players.length < 10 && !players.includes(playerName)) {
+                players.push(playerName);
+                points[playerName] = 0; // Initialize points for the player
+                updatePlayersList();
+                playerInput.value = '';
+            }
+        }
+
+        function startGame() {
+            if (players.length === 0) {
+                alert("Please add at least one player!");
+                return;
+            }
+
+            document.getElementById('inputArea').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            startTimer();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            if (currentTurn >= players.length) {
+                currentTurn = 0; // Reset to first player after all players have had a turn
+            }
+
+            const currentPlayer = players[currentTurn];
+            document.getElementById('currentPlayer').innerText = currentPlayer;
+            document.getElementById('question').innerText = 'Choose Truth or Dare!';
+            document.getElementById('responseButtons').style.display = 'flex'; // Show buttons for truth/dare
+            document.getElementById('scoreButtons').style.display = 'none'; // Hide score buttons
+            isTaskActive = false; // Reset task status
+            updatePointsDisplay(); // Update points display for the current player
+        }
+
+        document.getElementById("acceptTruthBtn").addEventListener("click", () => {
+            const questionText = getUniqueRandomItem(truthQuestions);
+            document.getElementById('question').innerText = questionText;
+            document.getElementById('responseButtons').style.display = 'none'; // Hide response buttons
+            document.getElementById('scoreButtons').style.display = 'flex'; // Show score buttons
+            isTaskActive = true; // Task is active
+        });
+
+        document.getElementById("acceptDareBtn").addEventListener("click", () => {
+            const challengeText = getUniqueRandomItem(dareChallenges);
+            document.getElementById('question').innerText = challengeText;
+            document.getElementById('responseButtons').style.display = 'none'; // Hide response buttons
+            document.getElementById('scoreButtons').style.display = 'flex'; // Show score buttons
+            isTaskActive = true; // Task is active
+        });
+
+        document.getElementById("checkMarkBtn").addEventListener("click", () => {
+            if (isTaskActive) {
+                points[players[currentTurn]] += 100; // Award points
+            }
+            currentTurn++;
+            nextTurn(); // Go to next turn
+        });
+
+        document.getElementById("crossMarkBtn").addEventListener("click", () => {
+            if (isTaskActive) {
+                points[players[currentTurn]] -= 100; // Deduct points
+            }
+            currentTurn++;
+            nextTurn(); // Go to next turn
+        });
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('timer').innerText = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            document.getElementById('gameArea').style.display = 'none';
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.style.display = 'block';
+            displayLeaderboard();
+        }
+
+        function displayLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+            const sortedPlayers = Object.keys(points).sort((a, b) => points[b] - points[a]);
+            sortedPlayers.forEach(player => {
+                leaderboardList.innerHTML += `<li>${player}: ${points[player]} points</li>`;
+            });
+        }
+
+        function updatePointsDisplay() {
+            document.getElementById('pointsDisplay').innerHTML = 'Points: ' + players.map(player => `${player}: ${points[player]}`).join(', ');
+        }
+
+        function getUniqueRandomItem(array) {
+            const randomIndex = Math.floor(Math.random() * array.length);
+            return array[randomIndex]; // Return a random item from the array
+        }
+
+        function updatePlayersList() {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            players.forEach(name => {
+                playerList.innerHTML += `
+                    <li>${name} <button class="remove-button" onclick="removePlayer('${name}')">Remove</button></li>`;
+            });
+        }
+
+        function removePlayer(name) {
+            const index = players.indexOf(name);
+            if (index > -1) {
+                players.splice(index, 1);
+                delete points[name]; // Remove player's points
+            }
+            updatePlayersList();
+            updatePointsDisplay(); // Update points display after removing a player
+        }
+    </script>
+</body>
+</html>
